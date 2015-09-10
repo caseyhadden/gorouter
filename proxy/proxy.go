@@ -119,6 +119,18 @@ func hostWithoutPort(req *http.Request) string {
 	return host
 }
 
+func pathWithoutQuery(req *http.Request) string {
+	path := req.RequestURI
+
+	// Remove query string
+	pos := strings.Index(path, "?")
+	if pos >= 0 {
+		path = path[0:pos]
+	}
+
+	return path
+}
+
 func (p *proxy) getStickySession(request *http.Request) string {
 	// Try choosing a backend using sticky session
 	if _, err := request.Cookie(StickyCookieKey); err == nil {
@@ -130,7 +142,7 @@ func (p *proxy) getStickySession(request *http.Request) string {
 }
 
 func (p *proxy) lookup(request *http.Request) *route.Pool {
-	uri := route.Uri(hostWithoutPort(request) + request.RequestURI)
+	uri := route.Uri(hostWithoutPort(request) + pathWithoutQuery(request))
 	return p.registry.Lookup(uri)
 }
 

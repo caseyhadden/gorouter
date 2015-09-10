@@ -805,6 +805,24 @@ var _ = Describe("Proxy", func() {
 		Expect(resp.TransferEncoding).To(BeNil())
 	})
 
+	It("Handles requests with a query string on path", func() {
+		ln := registerHandler(r, "test/my_path", func(conn *test_util.HttpConn) {
+			conn.CheckLine("GET /my_path?foo=bar HTTP/1.1")
+
+			conn.WriteResponse(test_util.NewResponse(http.StatusOK))
+		})
+		defer ln.Close()
+
+		conn := dialProxy(proxyServer)
+
+		conn.WriteLines([]string{
+			"GET /my_path?foo=bar HTTP/1.1",
+			"Host: test",
+		})
+
+		conn.CheckLine("HTTP/1.1 200 OK")
+	})
+
 	It("maintains percent-encoded values in URLs", func() {
 		shouldEcho("/abc%2b%2f%25%20%22%3F%5Edef", "/abc%2b%2f%25%20%22%3F%5Edef") // +, /, %, <space>, ", £, ^
 	})
